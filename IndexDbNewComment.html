@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8"> <!-- Character encoding for the document -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Ensures proper rendering and touch zooming on mobile devices -->
+  <title>IndexedDB Example</title> <!-- Title of the document -->
+</head>
+
+<body>
+  <h1>IndexedDB Example</h1> <!-- Main heading -->
+  <button id="add">Add Item</button> <!-- Button to add item -->
+  <button id="view">View Items</button> <!-- Button to view items -->
+  <div id="items"></div> <!-- Container to display items -->
+
+  <script>
+    const dbName = 'myDatabase'; // Name of the database
+    const dbVersion = 1; // Version of the database
+    let db; // Variable to store the database instance
+
+    const request = indexedDB.open(dbName, dbVersion); // Open a connection to IndexedDB
+
+    request.onupgradeneeded = event => { // Event triggered if the database needs to be upgraded
+      db = event.target.result; // Set the database instance
+      if (!db.objectStoreNames.contains('items')) { // Check if the object store does not exist
+        db.createObjectStore('items', { keyPath: 'id', autoIncrement: true }); // Create an object store for items with auto-incrementing ID
+      }
+    };
+
+    request.onsuccess = event => { // Event triggered on successful database connection
+      db = event.target.result; // Set the database instance
+    };
+
+    request.onerror = event => { // Event triggered on database connection error
+      console.error('Database error:', event.target.errorCode); // Log the error code
+    };
+
+    document.getElementById('add').addEventListener('click', () => { // Add event listener for 'Add Item' button
+      const transaction = db.transaction(['items'], 'readwrite'); // Start a read-write transaction
+      const store = transaction.objectStore('items'); // Access the items object store
+      const item = { name: 'Gaurav', timestamp: new Date() }; // Create a new item object
+      store.add(item); // Add the new item to the object store
+      transaction.oncomplete = () => { // Event triggered on successful transaction completion
+        alert('Item added successfully!'); // Alert the user
+      };
+      transaction.onerror = event => { // Event triggered on transaction error
+        console.error('Add error:', event.target.errorCode); // Log the error code
+      };
+    });
+
+    document.getElementById('view').addEventListener('click', () => { // Add event listener for 'View Items' button
+      const transaction = db.transaction(['items'], 'readonly'); // Start a read-only transaction
+      const store = transaction.objectStore('items'); // Access the items object store
+      const request = store.getAll(); // Get all items from the object store
+      request.onsuccess = () => { // Event triggered on successful data retrieval
+        const items = request.result; // Store the retrieved items
+        const itemsDiv = document.getElementById('items'); // Get the items container
+        itemsDiv.innerHTML = ''; // Clear the items container
+        items.forEach(item => { // Loop through each item
+          const itemElement = document.createElement('div'); // Create a new div element for the item
+          itemElement.textContent = `ID: ${item.id}, Name: ${item.name}, Timestamp: ${item.timestamp}`; // Set the content of the item element
+          itemsDiv.appendChild(itemElement); // Append the item element to the items container
+        });
+      };
+      request.onerror = event => { // Event triggered on data retrieval error
+        console.error('View error:', event.target.errorCode); // Log the error code
+      };
+    });
+  </script>
+</body>
+
+</html>

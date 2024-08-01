@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRUD with Alpine.js</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <style>
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1em;
+    }
+
+    .form-field {
+      margin-bottom: 1em;
+    }
+
+    .item {
+      padding: 1em;
+      border: 1px solid #ccc;
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+
+<body>
+  <div x-data="crudApp" x-init="initDB" class="container">
+
+    <h1>CRUD</h1>
+
+    <div class="form-field">
+      <label for="title">Title:</label>
+      <input type="text" id="title" x-model="item.title">
+    </div>
+
+    <div class="form-field">
+      <label for="description">Description:</label>
+      <textarea id="description" x-model="item.description"></textarea>
+    </div>
+
+    <div class="form-field">
+      <label for="price">Price:</label>
+      <input type="number" id="price" x-model="item.price">
+    </div>
+    <button @click="addItem" x-show="!isEdit">Add Item</button>
+    <button @click="updateItem" x-show="isEdit">Update Item</button>
+
+    <div>
+      <h2>Items</h2>
+      <template x-for="(item, index) in items" :key="item.id">
+        <div class="item">
+          <h3 x-text="item.title"></h3>
+          <p x-text="item.description"></p>
+          <p><strong>Price:</strong> Rs.<span x-text="item.price"></span></p>
+          <button @click="editItem(index)">Edit</button>
+          <button @click="deleteItem(index)">Delete</button>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <script>
+    function crudApp() {
+      return {
+        items: [],
+        item: { title: '', description: '', price: 0 },
+        isEdit: false,
+        currentIndex: -1,
+        db: null,
+
+        initDB() {
+          const request = indexedDB.open("CrudDB", 1);
+
+          request.onupgradeneeded = (event) => {
+            this.db = event.target.result;
+            this.db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
+          };
+
+          request.onsuccess = (event) => {
+            this.db = event.target.result;
+            this.loadItems();
+          };
+
+          request.onerror = (event) => {
+            console.error("Database error: ", event.target.errorCode);
+          };
+        },
+
+        loadItems() {
+          const transaction = this.db.transaction(["items"], "readonly");
+          const store = transaction.objectStore("items");
+          const request = store.getAll();
+
+          request.onsuccess = (event) => {
+            this.items = event.target.result;
+          };
+
+          request.onerror = (event) => {
+            console.error("Error loading items: ", event.target.errorCode);
+          };
+        },
+
+        addItem() {
+          if (this.item.title && this.item.description && this.item.price) {
+            const transaction = this.db.transaction(["items"], "readwrite");
+            const store = transaction.objectStore("items");
+            const newItem = { ...this.item };
+            const request = store.add(newItem);
+
+            request.onsuccess = (event) => {
+              newItem.id = event.target.result;
+              this.items.push(newItem);
+              this.resetItem();
+            };
+
+            request.onerror = (event) => {
+              console.error("Error adding item: ", event.target.errorCode);
+            };
+          }
+        },
+
+        editItem(index) {
+          this.item = { ...this.items[index] };
+          this.isEdit = true;
+          this.currentIndex = index;
+        },
+
+        updateItem() {
+          if (this.item.title && this.item.description && this.item.price) {
+            const transaction = this.db.transaction(["items"], "readwrite");
+            const store = transaction.objectStore("items");
+            const updatedItem = { ...this.item };
+            const request = store.put(updatedItem);
+
+            request.onsuccess = () => {
+              this.items[this.currentIndex] = updatedItem;
+              this.resetItem();
+              this.isEdit = false;
+              this.currentIndex = -1;
+            };
+
+            request.onerror = (event) => {
+              console.error("Error updating item: ", event.target.errorCode);
+            };
+          }
+        },
+
+        deleteItem(index) {
+          const item = this.items[index];
+          const transaction = this.db.transaction(["items"], "readwrite");
+          const store = transaction.objectStore("items");
+          const request = store.delete(item.id);
+
+          request.onsuccess = () => {
+            this.items.splice(index, 1);
+          };
+
+          request.onerror = (event) => {
+            console.error("Error deleting item: ", event.target.errorCode);
+          };
+        },
+
+        resetItem() {
+          this.item = { title: '', description: '', price: 0 };
+        }
+      };
+    }
+  </script>
+</body>
+
+</html>

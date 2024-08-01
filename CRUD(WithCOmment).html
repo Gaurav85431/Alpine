@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRUD with Alpine.js</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script> <!-- Loads Alpine.js-->
+  <style>
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1em;
+    }
+
+    .form-field {
+      margin-bottom: 1em;
+    }
+
+    .item {
+      padding: 1em;
+      border: 1px solid #ccc;
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+
+<body>
+  <div x-data="crudApp()" class="container"> <!-- div initialized with Alpine.js data from the crudApp() function -->
+
+    <h1>CRUD</h1>
+
+
+    <div class="form-field">
+      <label for="title">Title:</label>
+      <input type="text" id="title" x-model="item.title">
+      <!-- x-model Alpine.js ka ek directive hai jo form elements (jese input, textarea, select, etc.) ko data properties se bind karta hai.
+      
+      Yani ki agr form element ka value change hota hai, to uss value ko corresponding data property me update hoga.
+      -->
+    </div>
+
+    <div class="form-field">
+      <label for="description">Description:</label> <!-- for mtlab click on label to focus on the corresponding input
+      -->
+      <textarea id="description" x-model="item.description"></textarea>
+      <!-- label for="description" isko <textarea id="description"> se associate karta hai. same as title, price -->
+    </div>
+
+    <div class="form-field">
+      <label for="price">Price:</label>
+      <input type="number" id="price" x-model="item.price">
+    </div>
+    <button @click="addItem()" x-show="!isEdit">Add Item</button>
+    <!-- item add ka button tab show when isEdit false -->
+    <button @click="updateItem()" x-show="isEdit">Update Item</button>
+    <!--Ye button tab visible hota hai jab form edit mode me hota hai (isEdit true hota hai)-->
+
+
+    <div>
+      <h2>Items</h2>
+      <template x-for="(item, index) in items" :key="index">
+        <div class="item">
+          <h3 x-text="item.title"></h3>
+          <p x-text="item.description"></p>
+          <p><strong>Price:</strong> Rs.<span x-text="item.price"></span></p>
+          <button @click="editItem(index)">Edit</button>
+          <!-- this.isEdit ko true set karta hai. this.currentIndex ko index set karta haii.
+          Yeh button tab visible hota hai jab isEdit false hota hai. 
+          -->
+          <!-- Edit or delete item by their specific id -->
+          <button @click="deleteItem(index)">Delete</button>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <script>
+    function crudApp() {
+      return {
+        items: [], //items array store item ka list
+        item: { title: '', description: '', price: 0 }, //current item jo ki add/ update ho rha hai. item object me hia jo ki items array me store hoga.
+        isEdit: false, // item edit ho raha hai ya nahi
+        currentIndex: -1,// currently koi item edit nahi ho raha hai
+
+        addItem() { //add new item to array
+          if (this.item.title && this.item.description && this.item.price) { //Check karta hai ke item.title, item.description, aur item.price filled hain. this-> current Instance-> where code is executing
+            this.items.push({ ...this.item });//current item to the items array.
+            this.resetItem();// reset item object to its initial state
+          }
+        },
+
+        editItem(index) {
+          this.item = { ...this.items[index] };//selected item ka ek copy this.item me store hota hai hm us item ko edit kar sakten hai.
+          this.isEdit = true;//currently item ko edit kar rahe hain
+          this.currentIndex = index;
+          // editItem(index) function me hum this.currentIndex ko index se set kar rahe hain.
+
+          // Jab updateItem() function call hota hai, this.currentIndex me already saved index hota hai, jo editItem() me set kiya gaya tha.
+        },
+
+        updateItem() {
+          if (this.item.title && this.item.description && this.item.price) { // ydi all fields filled hain
+            this.items[this.currentIndex] = { ...this.item };
+            // this.currentIndex wo index hai jahan pe aapka item array me hai jo update ho raha hai.
+            // this.items[this.currentIndex] us item ko refer karta hai jo currently edit ho raha hai.
+            // { ...this.item } se this.item object ka copy banaya jata hai.
+            this.resetItem();//this.item ko initial state me reset karta hai.
+            this.isEdit = false;//false set karne se form edit mode se normal mode me chala jata hai
+            this.currentIndex = -1;//koi item currently edit nahi ho raha hai.
+          }
+        },
+
+        deleteItem(index) {
+          this.items.splice(index, 1);
+        },
+
+        resetItem() {
+          this.item = { title: '', description: '', price: 0 };
+        }
+      };
+    }
+  </script>
+</body>
+
+</html>

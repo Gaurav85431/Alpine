@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8"> <!-- Character encoding for the document -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Ensures proper rendering and touch zooming on mobile devices -->
+  <title>CRUD with Alpine.js</title> <!-- Title of the document -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <!-- Link to Alpine.js library -->
+  <style>
+    .container {
+      max-width: 1200px;
+      /* Maximum width of the container */
+      margin: 0 auto;
+      /* Center align the container */
+      padding: 1em;
+      /* Padding inside the container */
+    }
+
+    .form-field {
+      margin-bottom: 1em;
+      /* Margin at the bottom of each form field */
+    }
+
+    .item {
+      padding: 1em;
+      /* Padding inside each item */
+      border: 1px solid #ccc;
+      /* Border around each item */
+      margin-bottom: 1em;
+      /* Margin at the bottom of each item */
+    }
+  </style>
+</head>
+
+<body>
+  <div x-data="crudApp()" class="container"> <!-- Initializes Alpine.js data and sets the container class -->
+
+    <h1>CRUD</h1> <!-- Main heading -->
+
+
+    <div class="form-field"> <!-- Form field for title input -->
+      <label for="title">Title:</label> <!-- Label for title input -->
+      <input type="text" id="title" x-model="item.title"> <!-- Text input for title, bound to item.title -->
+
+    </div>
+
+    <div class="form-field"> <!-- Form field for description input -->
+      <label for="description">Description:</label> <!-- Label for description input -->
+      <textarea id="description" x-model="item.description"></textarea>
+      <!-- Textarea for description, bound to item.description -->
+    </div>
+
+    <div class="form-field"> <!-- Form field for price input -->
+      <label for="price">Price:</label> <!-- Label for price input -->
+      <input type="number" id="price" x-model="item.price"> <!-- Number input for price, bound to item.price -->
+    </div>
+    <button @click="addItem()" x-show="!isEdit">Add Item</button>
+    <!-- Button to add item, shown only when not in edit mode -->
+    <button @click="updateItem()" x-show="isEdit">Update Item</button>
+    <!-- Button to update item, shown only when in edit mode -->
+
+
+    <div>
+      <h2>Items</h2> <!-- Heading for the items section -->
+      <template x-for="(item, index) in items" :key="index"> <!-- Loop through items and render each item -->
+        <div class="item"> <!-- Container for each item -->
+          <h3 x-text="item.title"></h3> <!-- Display item title -->
+          <p x-text="item.description"></p> <!-- Display item description -->
+          <p><strong>Price:</strong> Rs.<span x-text="item.price"></span></p> <!-- Display item price -->
+          <button @click="editItem(index)">Edit</button> <!-- Button to edit item -->
+          <button @click="deleteItem(index)">Delete</button> <!-- Button to delete item -->
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <script>
+    function crudApp() { <!-- Function to handle CRUD operations -->
+      return {
+        items: [], //<!-- Array to store items -->
+        item: { title: '', description: '', price: 0 }, ////<!-- Object to store current item details -->
+        isEdit: false, //<!-- Boolean to track if in edit mode -->
+        currentIndex: -1,// <!-- Index of the current item being edited -->
+
+        addItem() {// <!-- Function to add item -->
+          if (this.item.title && this.item.description && this.item.price) { //<!-- Check if all item fields are filled -->
+            this.items.push({ ...this.item });// <!-- Add item to items array -->
+            this.resetItem(); //<!-- Reset the item fields -->
+          }
+        },
+
+        editItem(index) {// <!-- Function to edit item -->
+          this.item = { ...this.items[index] };// <!-- Set item fields to the item being edited -->
+          this.isEdit = true;// <!-- Set edit mode to true -->
+          this.currentIndex = index; //<!-- Set current index to the index of the item being edited -->
+        },
+
+        updateItem() {// <!-- Function to update item -->
+          if (this.item.title && this.item.description && this.item.price) {// <!-- Check if all item fields are filled -->
+            this.items[this.currentIndex] = { ...this.item }; //<!-- Update item in items array -->
+            this.resetItem();// <!-- Reset the item fields -->
+            this.isEdit = false;// <!-- Set edit mode to false -->
+            this.currentIndex = -1;// <!-- Reset current index -->
+          }
+        },
+
+        deleteItem(index) {// <!-- Function to delete item -->
+          this.items.splice(index, 1);// <!-- Remove item from items array -->
+        },
+
+        resetItem() {// <!-- Function to reset item fields -->
+          this.item = { title: '', description: '', price: 0 };// <!-- Reset item fields to initial state -->
+        }
+      };
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IndexedDB Example</title>
+</head>
+
+<body>
+  <h1>IndexedDB Example</h1>
+  <button id="add">Add Item</button>
+  <button id="view">View Items</button>
+  <div id="items"></div>
+
+  <script>
+
+    const dbName = 'myDatabase';
+    const dbVersion = 1;
+    let db;
+
+    const request = indexedDB.open(dbName, dbVersion);
+
+    request.onupgradeneeded = event => {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains('items')) {
+        db.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+
+    request.onsuccess = event => {
+      db = event.target.result;
+    };
+
+    request.onerror = event => {
+      console.error('Database error:', event.target.errorCode);
+    };
+
+
+    document.getElementById('add').addEventListener('click', () => {
+      const transaction = db.transaction(['items'], 'readwrite');
+      const store = transaction.objectStore('items');
+      const item = { name: 'Gaurav', timestamp: new Date() };
+      store.add(item);
+      transaction.oncomplete = () => {
+        alert('Item added successfully!');
+      };
+      transaction.onerror = event => {
+        console.error('Add error:', event.target.errorCode);
+      };
+    });
+
+
+    document.getElementById('view').addEventListener('click', () => {
+      const transaction = db.transaction(['items'], 'readonly');
+      const store = transaction.objectStore('items');
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const items = request.result;
+        const itemsDiv = document.getElementById('items');
+        itemsDiv.innerHTML = '';
+        items.forEach(item => {
+          const itemElement = document.createElement('div');
+          itemElement.textContent = `ID: ${item.id}, Name: ${item.name}, Timestamp: ${item.timestamp}`;
+          itemsDiv.appendChild(itemElement);
+        });
+      };
+      request.onerror = event => {
+        console.error('View error:', event.target.errorCode);
+      };
+    });
+  </script>
+</body>
+
+</html>
